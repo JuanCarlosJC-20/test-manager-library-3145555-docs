@@ -1,6 +1,6 @@
 # Data Model — Manager Library
 
-**Status: Draft.** This is the single source of truth for persistent entities and database structure. It follows the approved Laravel naming choice: plural table names, `snake_case` columns, and no entity prefix.
+**Status: Ready for implementation.** This is the single source of truth for persistent entities and database structure. It follows the approved Laravel naming choice: plural table names, `snake_case` columns, and no entity prefix.
 
 - **Reference database:** PostgreSQL 16.
 - **Database schema:** `library`.
@@ -130,13 +130,13 @@ There are no `created_at` or `updated_at` columns because the product requiremen
 | `total_copies >= 1` | `ck_books_total_positive` | Application initially; add database constraint in the persistence-hardening task |
 | `users.role` is `admin` or `librarian` | `ck_users_role` | Application initially; add database constraint in the persistence-hardening task |
 | A book occurs at most once per loan | Unique index on `(loan_id, book_id)` | Database |
-| A member has at most 3 unreturned books | No single-row check can enforce this aggregate rule | Application, within the loan transaction |
+| A member has at most 3 unreturned books | No single-row check can enforce this aggregate rule | Application, within the loan transaction while holding the member row lock |
 | A member with overdue items cannot borrow | Domain rule | Application, within the loan transaction |
 | A loan has 1 to 3 items | Aggregate rule | Application |
 | Creating a loan and decrementing available copies are atomic | Database transaction | Application and database |
 | A loan is immutable except for an item's `returned_at` | No update or delete operation is exposed | Application |
 
-The initial-loan operation must lock the relevant `books` rows in the database transaction before checking and decrementing available copies. The same transaction creates the loan and its items. The row-lock procedure and its consequences are recorded in [ADR-002](adr/adr-002-concurrency-control.md).
+The loan operation must lock the `members` row first, then the relevant active `books` rows in ascending book-ID order, inside one database transaction. Recheck the member's outstanding-loan limits and overdue status after acquiring the member lock; then check and decrement book availability. The same transaction creates the loan and its items. This protects both the member-level aggregate limit and available-copy counts. The row-lock procedure and its consequences are recorded in [ADR-002](adr/adr-002-concurrency-control.md).
 
 Recommended access indexes:
 

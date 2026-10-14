@@ -1,6 +1,6 @@
 # Product Specification — Manager Library
 
-**Status: Draft.** This document defines product behavior for the React and Laravel implementation. Framework-specific implementation choices belong in `architecture.md` and `plan.md`.
+**Status: Ready for implementation.** This document defines product behavior for the React and Laravel implementation. Framework-specific implementation choices belong in `architecture.md` and `plan.md`.
 
 The project is governed by [`constitution.md`](constitution.md). The data model is defined in [`data-model.md`](data-model.md), and the HTTP interface is defined in [`api-contract.md`](api-contract.md).
 

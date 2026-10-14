@@ -1,6 +1,6 @@
 # HTTP API Contract — Manager Library
 
-**Status: Draft.** This is the single source of truth for routes, request and response fields, authorization, and HTTP errors. Product behavior comes from [`spec.md`](spec.md); persistent fields come from [`data-model.md`](data-model.md).
+**Status: Ready for implementation.** This is the single source of truth for routes, request and response fields, authorization, and HTTP errors. Product behavior comes from [`spec.md`](spec.md); persistent fields come from [`data-model.md`](data-model.md).
 
 ## 1. Conventions
 
@@ -173,6 +173,8 @@ Representative book representation:
 { "member_id": "…", "items": [{ "book_id": "…" }, { "book_id": "…" }] }
 ```
 
+The server assigns `loaned_at` when the loan is recorded. Loan creation does not accept a client-supplied or backdated `loaned_at`. Date filters and the most-borrowed report use the loan's `loaned_at` timestamp, interpreted as a UTC instant; report boundaries are inclusive calendar dates.
+
 Representative 201 response:
 
 ```json
@@ -227,6 +229,6 @@ Group by `book_id`, snapshotted `book_title`, and snapshotted `category_name`. O
 | CORS | Allow only the frontend origin configured for the environment |
 | Cover uploads | Accept only JPEG and PNG content up to 2 MB; validate by file content, not filename extension |
 
-## 5. Items pending approval
+## 5. Contract ownership
 
-The report date interpretation for loans created with a backdated `loaned_at` remains to be resolved as described in [ADR-004](adr/adr-004-aggregated-report.md).
+Product behavior and acceptance criteria are defined in [`spec.md`](spec.md). Persistent fields and constraints are defined in [`data-model.md`](data-model.md). Changes that affect either source must be reconciled here before implementation.
