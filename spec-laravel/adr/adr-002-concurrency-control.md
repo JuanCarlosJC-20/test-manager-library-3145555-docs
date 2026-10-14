@@ -1,8 +1,9 @@
-# ADR-002: Concurrency Control
+# ADR-002: Serialize Loan Creation with Member and Book Row Locks
 
-- **Status:** Proposed; decision pending
-- **Context:** The system must prevent concurrent loans from making available-copy counts invalid.
-- **Decision:** Pending review. Specify how the version token or other concurrency mechanism is represented in the data model.
-- **Alternatives considered:** To be documented.
-- **Consequences:** To be documented after the decision.
-- **Verification:** To be documented after the decision.
+- **Status:** Accepted
+- **Date:** 2026-10-14
+- **Context:** Concurrent loan requests must not reduce `available_copies` below zero, exceed a member's maximum of three unreturned books, or create a partial loan. RNF-2 requires one of two simultaneous requests for the last available copy to succeed and the other to receive HTTP 409. The per-member limit is an aggregate rule that cannot be protected by locking only existing loan-item rows.
+- **Decision:** Create the loan inside a database transaction. First lock the requested member row for update; recheck that member's unreturned and overdue items while holding the lock. Then lock each requested active book row for update in ascending book-ID order before checking availability and decrementing copies. Create the loan and its items in the same transaction; roll back the entire operation if any validation or write fails. Do not add a version column.
+- **Alternatives considered:** Locking book rows alone protects inventory but does not serialize concurrent requests for the same member when they use different books. Optimistic concurrency with a version field would require retry or conflict handling around writes and would add a field. Serializable isolation would require a transaction retry policy.
+- **Consequences:** Requests for the same member serialize on that member row; requests for overlapping books may also wait for one another. Always acquire locks in the same order: member first, then book rows in ascending ID order. The implementation must use the same PostgreSQL transaction for locking, validation, decrementing, and inserts.
+- **Verification:** Run concurrent integration requests for the final copy. Exactly one request returns 201, the other returns 409, and the resulting `available_copies` value is zero. Also start concurrent requests for a member with two unreturned books using different available books; at most one may succeed, and the member must never exceed three. A multi-book request that fails for one book leaves all copy counts and loan rows unchanged.
