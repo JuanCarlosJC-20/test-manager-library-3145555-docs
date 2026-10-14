@@ -1,0 +1,9 @@
+# ADR-005: Adapt Hexagonal Architecture to Laravel
+
+- **Status:** Accepted
+- **Date:** 2026-10-14
+- **Context:** The .NET reference uses hexagonal architecture to keep product rules independent from HTTP, persistence, and infrastructure. The target is Laravel, and copying the .NET project structure or framework-specific components would make the Laravel specification misleading.
+- **Decision:** Preserve the hexagonal dependency direction and domain/application/adapter boundaries while expressing them within a Laravel application. Keep domain rules independent of Laravel and Eloquent; let the application define ports for external capabilities it consumes; implement those ports with inbound HTTP and outbound persistence, storage, and security adapters. Use Laravel service providers for composition. Follow Laravel conventions where compatible and introduce abstractions only for meaningful boundaries.
+- **Alternatives considered:** A framework-centric MVC layout without explicit domain/application boundaries would weaken the separation carried by the reference. Copying the .NET projects, class names, or composition mechanism would impose a structure that does not belong to Laravel.
+- **Consequences:** The application uses a logical `app/Domain`, `app/Application`, and `app/Adapters` organization rather than separate .NET-style packages. Laravel-specific controllers, Form Requests, Eloquent models, filesystem integration, middleware, and service providers stay at the adapter/composition boundaries. The application must not import adapter implementations.
+- **Verification:** Review the dependency direction for each new component. Domain and application classes must not import HTTP, Eloquent, filesystem, or JWT implementation types; adapters may depend inward on application contracts and domain types.
